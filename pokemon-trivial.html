@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pokétrivial</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0d0d1a;
+    --panel: #14142b;
+    --border: #2a2a50;
+    --yellow: #ffe033;
+    --red: #e8243c;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --white: #f0f0ff;
+    --muted: #6b6b9a;
+    --team1: #e8243c;
+    --team2: #3b82f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(232,36,60,0.12) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 0%, rgba(59,130,246,0.12) 0%, transparent 55%);
+  }
+
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .bolt {
+    font-size: 28px;
+    line-height: 1;
+    animation: boltPulse 2s ease-in-out infinite alternate;
+  }
+  @keyframes boltPulse {
+    from { filter: drop-shadow(0 0 6px rgba(255,224,51,0.5)); }
+    to   { filter: drop-shadow(0 0 18px rgba(255,224,51,1)); }
+  }
+
+  h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(13px, 2.8vw, 22px);
+    color: var(--yellow);
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(255,224,51,0.4);
+  }
+
+  /* SCOREBOARD */
+  .scoreboard {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 700px;
+    margin-bottom: 28px;
+  }
+
+  .team-card {
+    flex: 1;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .team-card.team1 { border-color: var(--team1); }
+  .team-card.team2 { border-color: var(--team2); }
+  .team-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .team-card.team1::before { background: var(--team1); }
+  .team-card.team2::before { background: var(--team2); }
+
+  .team-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+  }
+  .team-card.team1 .team-label { color: var(--team1); }
+  .team-card.team2 .team-label { color: var(--team2); }
+
+  .team-name {
+    font-size: 15px;
+    font-weight: 700;
+    background: transparent;
+    border: none;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    cursor: pointer;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 2px;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .team-name:focus { border-color: var(--yellow); }
+
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .score-display {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 28px;
+    min-width: 48px;
+    text-align: center;
+    transition: transform 0.15s;
+  }
+  .team-card.team1 .score-display { color: var(--team1); }
+  .team-card.team2 .score-display { color: var(--team2); }
+  .score-display.pop { transform: scale(1.35); }
+
+  .score-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    color: var(--white);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .score-btn:hover { background: var(--border); }
+  .score-btn.plus { color: var(--green); }
+  .score-btn.minus { color: var(--red); }
+
+  /* ROULETTE */
+  .roulette-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .wheel-frame {
+    position: relative;
+    width: 380px;
+    height: 380px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Outer rotating dashed ring */
+  .deco-ring-outer {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px dashed rgba(255,224,51,0.35);
+    animation: ringRotate 20s linear infinite;
+  }
+  /* Middle static ring */
+  .deco-ring-mid {
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,224,51,0.15);
+  }
+  @keyframes ringRotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* Corner bolts */
+  .corner-bolt {
+    position: absolute;
+    font-size: 20px;
+    line-height: 1;
+    filter: drop-shadow(0 0 5px rgba(255,224,51,0.7));
+  }
+  .corner-bolt.tl { top: 8px; left: 8px; }
+  .corner-bolt.tr { top: 8px; right: 8px; transform: scaleX(-1); }
+  .corner-bolt.bl { bottom: 8px; left: 8px; transform: scaleY(-1); }
+  .corner-bolt.br { bottom: 8px; right: 8px; transform: scale(-1,-1); }
+
+  /* Dot markers at N/S/E/W */
+  .ring-dot {
+    position: absolute;
+    width: 8px; height: 8px;
+    background: var(--yellow);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255,224,51,0.8);
+  }
+  .ring-dot.n { top: 0; left: 50%; transform: translateX(-50%); }
+  .ring-dot.s { bottom: 0; left: 50%; transform: translateX(-50%); }
+  .ring-dot.e { right: 0; top: 50%; transform: translateY(-50%); }
+  .ring-dot.w { left: 0; top: 50%; transform: translateY(-50%); }
+
+  .wheel-wrap {
+    position: relative;
+    width: 310px;
+    height: 310px;
+    flex-shrink: 0;
+  }
+
+  /* Conic gradient glow ring behind canvas */
+  .wheel-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    background: conic-gradient(#ffe033, #e8243c, #3b82f6, #22c55e, #a78bfa, #f97316, #ffe033);
+    z-index: 0;
+    animation: hueShift 8s linear infinite;
+  }
+  @keyframes hueShift {
+    from { filter: hue-rotate(0deg); }
+    to   { filter: hue-rotate(360deg); }
+  }
+  /* Dark separator between glow and canvas */
+  .wheel-wrap::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: var(--bg);
+    z-index: 1;
+  }
+
+  canvas#wheel {
+    display: block;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+  }
+
+  .spin-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    background: var(--yellow);
+    color: #0d0d1a;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 36px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 0 #a89000, 0 6px 20px rgba(255,224,51,0.3);
+  }
+  .spin-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #a89000, 0 8px 25px rgba(255,224,51,0.4); }
+  .spin-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #a89000; }
+  .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* RESULT CARD */
+  .result-card {
+    width: 100%;
+    max-width: 700px;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-card.visible {
+    display: flex;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--yellow);
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes rareFlash {
+    0%,100% { box-shadow: none; }
+    50% { box-shadow: 0 0 50px 16px rgba(255,224,51,0.45); }
+  }
+  .result-card.rare { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1), rareFlash 0.9s ease 0.5s 3; }
+
+  .result-tag {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
+  .result-emoji { font-size: 48px; line-height: 1; margin-bottom: 4px; }
+  .result-title { font-size: 22px; font-weight: 700; color: var(--white); }
+  .result-description { font-size: 14px; color: #a0a0c0; line-height: 1.6; }
+  .result-hint {
+    margin-top: 8px;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .result-hint strong { display: block; font-size: 11px; letter-spacing: 1px; margin-bottom: 4px; opacity: 0.7; }
+
+  /* HISTORY */
+  .history-section { width: 100%; max-width: 700px; margin-top: 20px; }
+  .history-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+  .history-list { display: flex; gap: 8px; flex-wrap: wrap; }
+  .history-chip {
+    font-size: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    color: var(--muted);
+  }
+
+  .controls-row { display: flex; gap: 10px; }
+  .ghost-btn {
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .ghost-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+</style>
+</head>
+<body>
+
+<div class="title-row">
+  <span class="bolt">⚡</span>
+  <h1>POKÉTRIVIAL</h1>
+  <span class="bolt">⚡</span>
+</div>
+
+<div class="scoreboard">
+  <div class="team-card team1">
+    <div class="team-label">EQUIPO 1</div>
+    <input class="team-name" id="name1" value="Equipo Rojo" maxlength="16">
+    <div class="score-row">
+      <button class="score-btn minus" onclick="addScore(1,-1)">−</button>
+      <div class="score-display" id="score1">0</div>
+      <button class="score-btn plus" onclick="addScore(1,1)">+</button>
+    </div>
+  </div>
+  <div class="team-card team2">
+    <div class="team-label">EQUIPO 2</div>
+    <input class="team-name" id="name2" value="Equipo Azul" maxlength="16">
+    <div class="score-row">
+      <button class="score-btn minus" onclick="addScore(2,-1)">−</button>
+      <div class="score-display" id="score2">0</div>
+      <button class="score-btn plus" onclick="addScore(2,1)">+</button>
+    </div>
+  </div>
+</div>
+
+<div class="roulette-section">
+  <div class="wheel-frame">
+    <div class="deco-ring-outer"></div>
+    <div class="deco-ring-mid"></div>
+    <span class="corner-bolt tl">⚡</span>
+    <span class="corner-bolt tr">⚡</span>
+    <span class="corner-bolt bl">⚡</span>
+    <span class="corner-bolt br">⚡</span>
+    <div class="ring-dot n"></div>
+    <div class="ring-dot s"></div>
+    <div class="ring-dot e"></div>
+    <div class="ring-dot w"></div>
+    <div class="wheel-wrap">
+      <canvas id="wheel" width="310" height="310"></canvas>
+    </div>
+  </div>
+
+  <button class="spin-btn" id="spinBtn" onclick="spin()">▶ GIRAR RULETA</button>
+  <div class="controls-row">
+    <button class="ghost-btn" onclick="resetScores()">Reiniciar puntos</button>
+    <button class="ghost-btn" onclick="resetHistory()">Limpiar historial</button>
+  </div>
+</div>
+
+<div class="result-card" id="resultCard">
+  <div class="result-tag" id="resultTag">MINIJUEGO SELECCIONADO</div>
+  <div class="result-emoji" id="resultEmoji"></div>
+  <div class="result-title" id="resultTitle"></div>
+  <div class="result-description" id="resultDesc"></div>
+  <div class="result-hint" id="resultHint">
+    <strong>CÓMO SE JUEGA</strong>
+    <span id="resultHintText"></span>
+  </div>
+</div>
+
+<div class="history-section">
+  <div class="history-title">HISTORIAL DE RONDAS</div>
+  <div class="history-list" id="historyList">
+    <span class="history-chip" style="font-style:italic">Sin rondas aún...</span>
+  </div>
+</div>
+
+<script>
+const GAMES = [
+  {
+    name: "Pokémon Look-alike",
+    label: "LOOK-ALIKE",
+    emoji: "🪞",
+    color: "#a78bfa",
+    rare: false,
+    desc: "Se van mostrando Pokémon que guardan un parecido sorprendente con personajes famosos, actores o figuras conocidas.",
+    hint: "Ambos equipos tienen 30 segundos para escribir en la pizarra a quién se parece el Pokémon. El juego termina cuando uno de los equipos acierta el look-alike."
+  },
+  {
+    name: "Glitch en la Pokédex",
+    label: "GLITCH",
+    emoji: "🔍",
+    color: "#e8243c",
+    rare: false,
+    desc: "Se muestra una imagen —puede ser un pueblo, una ficha de Pokédex u otra pantalla del juego— con algo ligeramente modificado que no debería estar ahí.",
+    hint: "El primero que detecte la diferencia agarra el tótem y responde. Si falla, la pregunta rebota al equipo contrario."
+  },
+  {
+    name: "Descripción Pokédex",
+    label: "POKÉDEX",
+    emoji: "📖",
+    color: "#06b6d4",
+    rare: false,
+    desc: "Se lee en voz alta una entrada oficial de la Pokédex mientras se muestran varios Pokémon en pantalla. Solo uno de ellos es el correcto.",
+    hint: "El equipo que primero agarre el tótem responde. Si falla, la pregunta rebota al equipo contrario."
+  },
+  {
+    name: "Adivina por los Stats",
+    label: "STATS",
+    emoji: "📊",
+    color: "#34d399",
+    rare: false,
+    desc: "Se muestran las estadísticas base de un Pokémon junto a cuatro posibles candidatos. Solo uno encaja con esos números.",
+    hint: "El equipo que primero agarre el tótem responde. Si falla, la pregunta rebota al equipo contrario."
+  },
+  {
+    name: "El Precio Justo",
+    label: "PRECIO",
+    emoji: "🃏",
+    color: "#f97316",
+    rare: false,
+    desc: "Se muestra una carta del JCC Pokémon y ambos equipos deben estimar su precio de mercado actual.",
+    hint: "Cada equipo escribe su precio en la pizarra. El que más se acerque gana la ronda. Se juegan 5 rondas al mejor de 5."
+  },
+  {
+    name: "COMBATE",
+    label: "COMBATE",
+    emoji: "⚔️",
+    color: "#ffe033",
+    rare: true,
+    desc: "El desafío final. Los dos equipos se enfrentan en un combate de dobles al mejor de 3, ambos con el mismo equipo.",
+    hint: "Cada equipo elige un jugador (preferiblemente sin mucha experiencia) y el resto ejerce de coach. 5 minutos de preparación por combate y 2 pausas de 30 segundos dentro de cada batalla. El equipo ganador obtiene 5 puntos."
+  }
+];
+
+// ─── SMART SEQUENCE LOGIC ───
+// Pre-generate a shuffled sequence so each small game appears exactly 2 times
+// in random order, no two consecutive same game, then Combate at round 11.
+const SMALL_GAMES = [0, 1, 2, 3, 4];
+const COMBATE_INDEX = 5;
+
+function shuffleNoConsecutive(arr) {
+  // Fisher-Yates shuffle, then fix consecutive duplicates
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  // Fix consecutive duplicates by swapping with next non-duplicate
+  for (let i = 0; i < a.length - 1; i++) {
+    if (a[i] === a[i + 1]) {
+      // find a swap candidate further ahead
+      for (let j = i + 2; j < a.length; j++) {
+        if (a[j] !== a[i]) {
+          [a[i + 1], a[j]] = [a[j], a[i + 1]];
+          break;
+        }
+      }
+    }
+  }
+  return a;
+}
+
+function buildSequence() {
+  // Each small game twice → 10 rounds, then Combate
+  const base = [...SMALL_GAMES, ...SMALL_GAMES]; // [0,1,2,3,4,0,1,2,3,4]
+  const shuffled = shuffleNoConsecutive(base);
+  shuffled.push(COMBATE_INDEX);
+  return shuffled;
+}
+
+let sequence = buildSequence();
+let sequencePos = 0;
+
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const N = GAMES.length;
+const ARC = (2 * Math.PI) / N;
+let currentAngle = 0;
+let spinning = false;
+let history = [];
+
+// ── LIGHTS STATE ──
+let litSector = -1; // which sector is currently highlighted (-1 = none)
+
+function drawWheel(angle, highlight = -1) {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const r = canvas.width / 2 - 3;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  GAMES.forEach((g, i) => {
+    const start = angle + i * ARC;
+    const end = start + ARC;
+    const isLit = (i === highlight);
+
+    // Slice fill — brighten if highlighted
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end);
+    ctx.closePath();
+
+    if (isLit) {
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.25;
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, start, end);
+      ctx.closePath();
+    }
+    ctx.fillStyle = i % 2 === 0 ? g.color : g.color + 'aa';
+    ctx.fill();
+
+    // Highlight overlay
+    if (isLit) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, start, end);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = '#08081a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Emoji
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(start + ARC / 2);
+    ctx.textAlign = 'right';
+    ctx.font = '15px serif';
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(g.emoji, r - 8, 6);
+
+    // Wheel label
+    ctx.font = 'bold 8.5px sans-serif';
+    ctx.fillStyle = isLit ? '#ffffff' : 'rgba(255,255,255,0.92)';
+    ctx.shadowBlur = isLit ? 8 : 0;
+    ctx.fillText(g.label, r - 28, 6);
+    ctx.restore();
+
+    // Light dot on the outer rim at sector midpoint
+    const midAngle = angle + i * ARC + ARC / 2;
+    const dotR = r - 6;
+    const dx = cx + dotR * Math.cos(midAngle);
+    const dy = cy + dotR * Math.sin(midAngle);
+
+    ctx.beginPath();
+    ctx.arc(dx, dy, isLit ? 7 : 4, 0, 2 * Math.PI);
+    if (isLit) {
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = g.color;
+      ctx.shadowBlur = 16;
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.shadowBlur = 0;
+    }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+
+  // Rim
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Center bg
+  ctx.beginPath();
+  ctx.arc(cx, cy, 30, 0, 2 * Math.PI);
+  ctx.fillStyle = '#08081a';
+  ctx.fill();
+  ctx.strokeStyle = '#ffe033';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Center pokeball fill
+  const grad = ctx.createRadialGradient(cx-4, cy-4, 2, cx, cy, 24);
+  grad.addColorStop(0, '#ffe55a');
+  grad.addColorStop(1, '#b89600');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 24, 0, 2 * Math.PI);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(cx - 12, cy);
+  ctx.lineTo(cx + 12, cy);
+  ctx.strokeStyle = '#08081a';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
+  ctx.fillStyle = '#08081a';
+  ctx.fill();
+  ctx.strokeStyle = '#ffe033';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+drawWheel(0);
+
+// ── LIGHTS ANIMATION ──
+// After wheel stops, a "light" bounces around sectors with easing and lands on target.
+function runLights(targetIndex, onDone) {
+  const totalSteps = 20 + Math.floor(Math.random() * 10); // 20–29 steps total
+  // Build step sequence: start fast, slow down, land on target
+  // Last few steps must land on targetIndex
+  const steps = [];
+  let cur = Math.floor(Math.random() * N);
+
+  for (let s = 0; s < totalSteps; s++) {
+    steps.push(cur);
+    // Move to next sector (always forward)
+    cur = (cur + 1) % N;
+  }
+
+  // Force the last step to be targetIndex
+  // Adjust by padding steps so we naturally land there
+  const lastInSteps = steps[steps.length - 1];
+  const diff = ((targetIndex - lastInSteps) + N) % N;
+  // Add diff extra steps to land on target
+  for (let d = 0; d < diff; d++) {
+    steps.push((lastInSteps + d + 1) % N);
+  }
+  steps.push(targetIndex); // guaranteed final
+
+  // Timing: accelerate then decelerate
+  const n = steps.length;
+  let stepIdx = 0;
+
+  function nextStep() {
+    if (stepIdx >= n) {
+      onDone();
+      return;
+    }
+    litSector = steps[stepIdx];
+    drawWheel(currentAngle, litSector);
+
+    // Easing: fast in middle, slow at start and end
+    const progress = stepIdx / (n - 1); // 0→1
+    // slowest at 0 and 1, fastest around 0.35
+    let interval;
+    if (progress < 0.4) {
+      interval = 60 + (0.4 - progress) / 0.4 * 120; // 180ms→60ms
+    } else {
+      interval = 60 + (progress - 0.4) / 0.6 * 500; // 60ms→560ms
+    }
+
+    stepIdx++;
+    setTimeout(nextStep, interval);
+  }
+
+  nextStep();
+}
+
+function spin() {
+  if (spinning) return;
+  spinning = true;
+  litSector = -1;
+  document.getElementById('spinBtn').disabled = true;
+  const card = document.getElementById('resultCard');
+  card.classList.remove('visible', 'rare');
+
+  const targetIndex = sequence[sequencePos];
+
+  // Wheel spins freely — just looks good, no alignment needed
+  const extraSpins = 5 + Math.random() * 4;
+  const totalAngle = extraSpins * 2 * Math.PI;
+
+  const duration = 3500 + Math.random() * 1000;
+  const startTime = performance.now();
+  const startAngle = currentAngle;
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+  function frame(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    currentAngle = startAngle + totalAngle * easeOut(progress);
+    drawWheel(currentAngle, -1);
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      currentAngle = startAngle + totalAngle;
+      drawWheel(currentAngle, -1);
+      // Wheel stopped — now run the lights
+      setTimeout(() => {
+        runLights(targetIndex, () => {
+          spinning = false;
+          document.getElementById('spinBtn').disabled = false;
+          showResult(targetIndex);
+        });
+      }, 300);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function showResult(index) {
+  const g = GAMES[index];
+  document.getElementById('resultEmoji').textContent = g.emoji;
+  document.getElementById('resultTitle').textContent = g.name;
+  document.getElementById('resultDesc').textContent = g.desc;
+  document.getElementById('resultHintText').textContent = g.hint;
+
+  const card = document.getElementById('resultCard');
+  const tag = document.getElementById('resultTag');
+  const hint = document.getElementById('resultHint');
+
+  card.style.borderColor = g.color;
+  tag.style.color = g.color;
+  tag.textContent = g.rare ? '🌟 ¡RONDA ESPECIAL!' : 'MINIJUEGO SELECCIONADO';
+  hint.style.background = g.color + '18';
+  hint.style.border = `1px solid ${g.color}55`;
+  hint.style.color = g.color;
+
+  card.classList.add('visible');
+  if (g.rare) card.classList.add('rare');
+
+  sequencePos++;
+  history.push(g.name);
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!history.length) {
+    list.innerHTML = '<span class="history-chip" style="font-style:italic">Sin rondas aún...</span>';
+    return;
+  }
+  list.innerHTML = history.map((h, i) => `<span class="history-chip">${i+1}. ${h}</span>`).join('');
+}
+
+const scores = { 1: 0, 2: 0 };
+function addScore(team, delta) {
+  scores[team] = Math.max(0, scores[team] + delta);
+  const el = document.getElementById('score' + team);
+  el.textContent = scores[team];
+  el.classList.add('pop');
+  setTimeout(() => el.classList.remove('pop'), 200);
+}
+function resetScores() {
+  scores[1] = 0; scores[2] = 0;
+  document.getElementById('score1').textContent = '0';
+  document.getElementById('score2').textContent = '0';
+}
+function resetHistory() {
+  history = [];
+  sequence = buildSequence();
+  sequencePos = 0;
+  renderHistory();
+}
+</script>
+</body>
+</html>
